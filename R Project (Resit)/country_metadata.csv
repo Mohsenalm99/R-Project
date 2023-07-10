@@ -1,0 +1,11 @@
+location,stringency_index,population_density,median_age,aged_65_older,aged_70_older,gdp_per_capita,extreme_poverty,cardiovasc_death_rate,diabetes_prevalence,female_smokers,male_smokers,handwashing_facilities,hospital_beds_per_thousand,life_expectancy,human_development_index
+Dominica,0,98.567,,,,9673.367,,227.376,11.62,,,,3.8,75,0.742
+Falkland Islands,,,,,,,,,,,,,,81.44,
+Iraq,0,88.125,20,3.186,1.957,15663.986,2.5,218.612,8.83,,,94.576,1.4,70.6,0.674
+Ireland,0,69.874,38.7,13.928,8.678,67335.293,0.2,126.459,3.28,23,25.7,,2.96,82.3,0.955
+Latvia,0,31.212,43.9,19.754,14.136,25063.846,0.7,350.06,4.91,25.6,51,,5.57,75.29,0.866
+Moldova,0,123.655,37.6,10.864,6.955,5189.972,0.2,408.502,5.72,5.9,44.6,86.979,5.8,71.9,0.75
+Saint Barthelemy,,,,,,,,,,,,,,,
+Sao Tome and Principe,,212.841,18.7,2.886,2.162,3052.714,32.3,270.113,2.42,,,41.34,2.9,70.39,0.625
+Thailand,0,135.132,40.1,11.373,6.89,16277.671,0.1,109.861,7.04,1.9,38.8,90.67,2.1,77.15,0.777
+Turkmenistan,0,12.253,26.9,4.277,2.541,16389.023,,536.783,7.11,,,100,7.4,68.19,0.715

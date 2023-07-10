@@ -1,0 +1,152 @@
+---
+title: "R Covid Project"
+format: html
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(tidyverse)
+library(ggplot2)
+library(readr)
+library(ggrepel)
+
+country_data <- read.csv("/cloud/project/country_data.csv")
+
+
+country_metadata <- read.csv("/cloud/project/country_metadata.csv")
+
+```
+
+## Overview
+
+The following page will be analysing the Covid-19 data of **Ireland** and 9 other countries through the use of **4 visulazations** 
+
+- **World Map**
+- **Bar Chart**
+- **Scatter plot with linear regression**
+- **Time Series Chart** 
+
+```{r, include=FALSE}
+world <- map_data("world")
+world
+
+world_midpoint <- world %>% 
+  mutate(region=tolower(region)) %>%
+  group_by(region) %>%
+  summarize(long_avg= mean(long,na.rm=TRUE),
+            lat_avg= mean(lat,na.rm=TRUE))
+
+
+country_data_allyears <- country_data %>% 
+  filter(new_cases >=0) %>%
+  mutate(location=tolower(location)) %>%
+  group_by(location) %>%
+  summarize(Cases_smoothed_per_million = sum(new_cases_smoothed_per_million,na.rm=TRUE),
+            Deaths_smoothed_per_million = sum(new_deaths_smoothed_per_million,na.rm=TRUE))
+
+country_data_allyears_gis <- merge(country_data_allyears, world_midpoint, by.x = "location", by.y = "region")
+
+country_data_allyears_gis["location"][country_data_allyears_gis["location"] == "ireland"] <- "Ireland"
+country_data_allyears_gis["location"][country_data_allyears_gis["location"] == "dominica"] <- "Dominica"
+country_data_allyears_gis["location"][country_data_allyears_gis["location"] == "falkland islands"] <- "Falkland Islands"
+country_data_allyears_gis["location"][country_data_allyears_gis["location"] ==  "iraq"] <- "Iraq"
+country_data_allyears_gis["location"][country_data_allyears_gis["location"] == "latvia"] <- "Latvia"
+country_data_allyears_gis["location"][country_data_allyears_gis["location"] ==  "moldova"] <- "Moldova"
+country_data_allyears_gis["location"][country_data_allyears_gis["location"] ==  "saint barthelemy"] <- "Saint Barthelemy"
+country_data_allyears_gis["location"][country_data_allyears_gis["location"] ==  "sao tome and principe"] <- "Sao Tome and Principe"
+country_data_allyears_gis["location"][country_data_allyears_gis["location"] ==  "saint barthelemy"] <- "Saint Barthelemy"
+country_data_allyears_gis["location"][country_data_allyears_gis["location"] ==  "thailand"] <- "Thailand"
+country_data_allyears_gis["location"][country_data_allyears_gis["location"] ==  "turkmenistan"] <- "Turkmenistan"
+
+
+country_data_allyears_xy <- merge(country_data_allyears_gis, country_metadata, by.x = "location", by.y = "location")
+
+```
+## World Map 
+
+```{r}
+p0 <- ggplot() +
+  geom_map(
+    data = world, map = world,
+    aes(long, lat, map_id = region),
+    color = "white", fill = "lightgray", size = 0.1
+  ) +
+  geom_point(
+    data = country_data_allyears_gis,
+    aes(long_avg, lat_avg, 
+        color = location,
+        size= Deaths_smoothed_per_million),
+    alpha = 0.5
+  ) +
+    theme_void() +
+  theme(legend.title = element_text(size=10)) +  
+  theme(legend.text = element_text(size=10)) +   
+  theme(legend.position = c(0.2, 0.5)) +
+  labs(title="Covid-19 Deaths")
+p0
+
+```
+From the World Map we can see that the largest *death tolls* in accordance to the 9 country analysis lands in **Latvia** and **Moldova**.  **Ireland** has a lower death rate than the former two countries but seems to have a more alarming death rate than those outside of **Europe**. **Turkmenistan** reports the lowest death rates, but as it is run by an authoritarian regime in which the ***media*** is not completely free, one can assume that the figures might not be as ***honest***  as those under a liberal regime. 
+
+
+## Bar Chart
+
+```{r}
+data <- country_data_allyears_xy
+p1a <- ggplot(data, aes(x=location, y=Cases_smoothed_per_million)) + 
+       ylab("Covid-19 cases smoothed per million") + 
+       scale_y_continuous(labels = scales::comma_format(big.mark = ',',decimal.mark = '.')) +
+       xlab("Country") + 
+       geom_bar(stat = "identity") +
+       #geom_text(aes(label=Cases_smoothed_per_million), position=position_dodge(width=0.9), vjust=-0.25) +
+       theme(axis.text.x = element_text(size=10, angle=45, hjust=1))
+p1a
+
+```
+The **Bar Chart** shows that Ireland's Covid-19 cases smoothed per million sits in the middle between the other countries in comparison. *Latvia* with the highest cases per million, with just over **500,000** cases reported. 
+
+On the other side of the scale *Sao Tome and Principe* has the lowest rate of countries that reported data, with under just **30,000** cases reported. 
+
+
+## Scatter plot with Regression Line 
+
+
+```{r}
+data2 <- country_data_allyears_xy
+p2b <- ggplot(data2, aes(x=human_development_index, y=Deaths_smoothed_per_million, label=location)) + 
+  ylab("Covid-19 deaths smoothed per million") + 
+  scale_y_continuous(labels = scales::comma_format(big.mark = ',',decimal.mark = '.')) +
+  xlab("Human Development Index") + 
+  geom_text(hjust=0.5, vjust=1.2) + 
+  geom_smooth(method=lm, se=FALSE) + 
+  geom_point()
+p2b
+```
+For the **Scatter plot** I choose to look at the relationship between a countries *Human development index*(HDI) and how that might correlate with the **deaths smoothed per million**. 
+
+The trend seen seems to follow the idea that as a county is more developed it will suffer more deaths per million. **Ireland** has the highest *HDI* while also having the 3rd largest death per million.   
+
+
+## Time-Series Chart. 
+
+```{r}
+data3 <- country_data
+data4 <- subset(country_data, date >= as.Date("2022-1-1"))
+data5 <- subset(country_data, date <= as.Date("2021-12-31"))
+
+p3f <- country_data %>% 
+  group_by(location) %>% 
+  ggplot()+
+  geom_line(aes(date, new_vaccinations_smoothed_per_million, group=location, color=location))+
+  ylab("Covid-19 vaccinations smoothed per million")+
+  xlab("date")
+p3f
+```
+For the time-series chart I choose to look at the **roll out of the vaccination** in each of the 9 countries at hand. It seems that in most of the *European countries*, the vaccination was rolled out in waves, maybe indicating a hesitance within the population towards taking the vaccine. **Ireland** has two distinct waves of vaccination, the first were most likely “pro-vaxxer” who wanted to end the pandemic as soon as possible and believed that the solution was the vaccine. For those who didn’t see the vaccine as the solution at the initial stages, but might of taken the vaccine eventually to satisfy travel restriction mandates, hence the possibility of a second wave of vaccinators. Additional data would be needed to confirm these assumptions, data such as the amount of vaccines exported to countries and the dates they arrived, showing that the limitations of resources can be a factor for the multiple waves of vaccinations. 
+
+The **Falkland Islands** has the most curios case, in which all vaccines were taken within the first couple of months of the roll out. 
